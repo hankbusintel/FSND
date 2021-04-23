@@ -3,6 +3,8 @@
 #----------------------------------------------------------------------------#
 
 import json
+from os import abort
+
 import dateutil.parser
 import babel
 from flask import Flask, render_template, request, Response, flash, redirect, url_for
@@ -60,6 +62,19 @@ class Artist(db.Model):
     seeking_venue = db.Column(db.Boolean)
     seeking_decription = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
+
+    @property
+    def getJson(self):
+      return {'id': self.id,
+              'name': self.name,
+              'city': self.city,
+              'state': self.state,
+              'phone': self.phone,
+              'genres': self.genres,
+              'image_link': self.image_link,
+              'facebook_link': self.facebook_link,
+              'seeking_venue': self.seeking_venue,
+              }
 
 Show = db.Table(
   'Show',
@@ -257,6 +272,7 @@ def delete_venue(venue_id):
 @app.route('/artists')
 def artists():
   # TODO: replace with real data returned from querying the database
+  """
   data=[{
     "id": 4,
     "name": "Guns N Petals",
@@ -267,6 +283,8 @@ def artists():
     "id": 6,
     "name": "The Wild Sax Band",
   }]
+  """
+  data = Artist.query.all()
   return render_template('pages/artists.html', artists=data)
 
 @app.route('/artists/search', methods=['POST'])
@@ -366,20 +384,12 @@ def show_artist(artist_id):
 #  ----------------------------------------------------------------
 @app.route('/artists/<int:artist_id>/edit', methods=['GET'])
 def edit_artist(artist_id):
-  form = ArtistForm()
-  artist={
-    "id": 4,
-    "name": "Guns N Petals",
-    "genres": ["Rock n Roll"],
-    "city": "San Francisco",
-    "state": "CA",
-    "phone": "326-123-5000",
-    "website": "https://www.gunsnpetalsband.com",
-    "facebook_link": "https://www.facebook.com/GunsNPetals",
-    "seeking_venue": True,
-    "seeking_description": "Looking for shows to perform at in the San Francisco Bay Area!",
-    "image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80"
-  }
+  artist_update = Artist.query.filter(Artist.id==artist_id).one_or_none()
+  if artist_update is None:
+    abort(404)
+  artist=artist_update.getJson
+  form = ArtistForm(data=artist)
+
   # TODO: populate form with fields from artist with ID <artist_id>
   return render_template('forms/edit_artist.html', form=form, artist=artist)
 
