@@ -34,10 +34,16 @@ def upgrade():
     op.add_column('Venue', sa.Column('seeking_talent', sa.Boolean(), nullable=True))
     op.add_column('Venue', sa.Column('website', sa.String(length=120), nullable=True))
     # ### end Alembic commands ###
-    op.execute(""" DELETE FROM public."Venue";
-                    INSERT INTO public."Venue" VALUES
+    op.execute(""" 
+                    DELETE FROM public."Venue";
+                    
+                    INSERT INTO public."Venue" 
                     (
-                        1,
+                    name,city,state,address, phone,image_link,facebook_link,
+                    genres,seeking_description,seeking_talent,website
+                    )
+                    VALUES
+                    (
                         'The Musical Hop',
                         'San Francisco',
                         'CA',
@@ -51,7 +57,6 @@ def upgrade():
                         'https://www.themusicalhop.com'
                     ),
                     (
-                        2,
                         'The Dueling Pianos Bar',
                         'New York',
                         'NY',
@@ -65,7 +70,6 @@ def upgrade():
                         'https://www.theduelingpianos.com'
                     ),
                     (
-                        3,
                         'Park Square Live Music & Coffee',
                         'San Francisco',
                         'CA',
@@ -79,47 +83,54 @@ def upgrade():
                         'https://www.parksquarelivemusicandcoffee.com'
                     );
 
-    """)
-    op.execute("""
-            DELETE FROM public."Artist";
 
-            INSERT INTO public."Artist" VALUES
-            (4,	
-             'GUNS N PETALS',	
-             'San Francisco'	,
-             'CA',
-             '326-123-5000',
-             '{"Rock n Roll"}'	,
-             'https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80',	
-             'https://www.facebook.com/GunsNPetals',
-             'Looking for shows to perform at in the San Francisco Bay Area!',
-             true,	
-             'https://www.gunsnpetalsband.com'
-             ),
-             (5	,
-              'Matt Quevedo',
-              'New York',
-              'NY',
-              '300-400-5215',
-              '{"Jazz"}',
-              'https://images.unsplash.com/photo-1495223153807-b916f75de8c5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=334&q=80',
-              'https://www.facebook.com/mattquevedo923251523'	,
-              NULL,
-              FALSE,
-              NULL
-              ),
-              (6	,
-              'The Wild Sax Band',
-              'San Francisco',
-              'CA',
-              '432-325-5432',
-              '{"Jazz","Classical"}',
-              'https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80',
-              NULL	,
-              NULL,
-              FALSE,
-              NULL
-              );
+
+    """)
+    op.execute(""" 
+                    DELETE FROM public."Artist";
+                    
+                    INSERT INTO public."Artist" 
+                    (
+                        name,city,state,phone,genres,image_link,facebook_link,
+                        seeking_decription,seeking_venue,website
+                    )
+                    VALUES
+                    (
+                     'GUNS N PETALS',	
+                     'San Francisco'	,
+                     'CA',
+                     '326-123-5000',
+                     '{"Rock n Roll"}'	,
+                     'https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80',	
+                     'https://www.facebook.com/GunsNPetals',
+                     'Looking for shows to perform at in the San Francisco Bay Area!',
+                     true,	
+                     'https://www.gunsnpetalsband.com'
+                     ),
+                     (
+                      'Matt Quevedo',
+                      'New York',
+                      'NY',
+                      '300-400-5215',
+                      '{"Jazz"}',
+                      'https://images.unsplash.com/photo-1495223153807-b916f75de8c5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=334&q=80',
+                      'https://www.facebook.com/mattquevedo923251523'	,
+                      NULL,
+                      FALSE,
+                      NULL
+                      ),
+                      (
+                      'The Wild Sax Band',
+                      'San Francisco',
+                      'CA',
+                      '432-325-5432',
+                      '{"Jazz","Classical"}',
+                      'https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80',
+                      NULL	,
+                      NULL,
+                      FALSE,
+                      NULL
+                      );
     """)
 
 def downgrade():
