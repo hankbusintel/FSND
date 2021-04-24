@@ -46,6 +46,21 @@ class Venue(db.Model):
     seeking_description = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
 
+    @property
+    def getJson(self):
+      return {'id':self.id,
+              'name':self.name,
+              'genres':self.genres,
+              'address':self.genres,
+              'city':self.city,
+              'state':self.state,
+              'phone':self.phone,
+              'website':self.website,
+              'facebook_link':self.facebook_link,
+              'seeking_talent':self.seeking_talent,
+              'seeking_description':self.seeking_description,
+              'image_link':self.image_link
+              }
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
 class Artist(db.Model):
@@ -272,18 +287,6 @@ def delete_venue(venue_id):
 @app.route('/artists')
 def artists():
   # TODO: replace with real data returned from querying the database
-  """
-  data=[{
-    "id": 4,
-    "name": "Guns N Petals",
-  }, {
-    "id": 5,
-    "name": "Matt Quevedo",
-  }, {
-    "id": 6,
-    "name": "The Wild Sax Band",
-  }]
-  """
   data = Artist.query.all()
   return render_template('pages/artists.html', artists=data)
 
@@ -397,12 +400,33 @@ def edit_artist(artist_id):
 def edit_artist_submission(artist_id):
   # TODO: take values from the form submitted, and update existing
   # artist record with ID <artist_id> using the new attributes
+  try:
+    artist = Artist.query.get(artist_id)
+    artist.name = request.form.get("name")
+    artist.state = request.form.get("state")
+    artist.phone = request.form.get("phone")
+    artist.genres = request.form.get("genres")
+    artist.facebook_link = request.form.get("facebook_link")
+    artist.image_link = request.form.get("image_link")
+    artist.website = request.form.get("website_link")
+    artist.seeking_venue = request.form.get("seeking_venue")
+    artist.seeking_decription = request.form.get("seeking_description")
+    db.session.commit()
+  except:
+    db.session.rollback()
+  finally:
+    db.session.close()
 
   return redirect(url_for('show_artist', artist_id=artist_id))
 
 @app.route('/venues/<int:venue_id>/edit', methods=['GET'])
 def edit_venue(venue_id):
-  form = VenueForm()
+  venue_update = Venue.query.get(venue_id)
+  #if not venue_update:
+    #abort(404)
+  venue=venue_update.getJson
+  form = VenueForm(data=venue)
+  """
   venue={
     "id": 1,
     "name": "The Musical Hop",
@@ -418,6 +442,7 @@ def edit_venue(venue_id):
     "image_link": "https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60"
   }
   # TODO: populate form with values from venue with ID <venue_id>
+  """
   return render_template('forms/edit_venue.html', form=form, venue=venue)
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
