@@ -91,14 +91,24 @@ class Artist(db.Model):
               'seeking_venue': self.seeking_venue,
               }
 
+class Show(db.Model):
+  __tablename__ = 'Show'
+  id = db.Column(db.Integer, primary_key = True)
+  Venue_id = db.Column(db.Integer, db.ForeignKey('Venue.id'),nullable=False)
+  Artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id'), nullable=False)
+  Start_time = db.Column(db.DateTime(),nullable=False)
+  venue = db.relationship('Venue',backref=db.backref('shows'))
+  artist = db.relationship('Artist', backref=db.backref('shows'))
+
+"""  
 Show = db.Table(
   'Show',
   db.Column('Artist_id',db.Integer, db.ForeignKey('Artist.id'),primary_key=True),
   db.Column('Venue_id',db.Integer, db.ForeignKey('Venue.id'),primary_key=True),
-  db.Column('Start_time',db.DateTime,nullable=False)
+  db.Column('Start_time',db.DateTime,primary_key=True)
 )
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
-
+"""
 # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
 
 #----------------------------------------------------------------------------#
@@ -505,8 +515,9 @@ def create_artist_submission():
     db.session.add(artist)
     db.session.commit()
     flash('Artist ' + request.form['name'] + ' was successfully listed!')
-  except:
+  except Exception as e:
     db.session.rollback()
+    print (e)
     print ("Db record create failed. Db Rollbacked.")
     flash('An error occurred. Artist ' + artist.name + ' could not be listed.')
   finally:
@@ -521,7 +532,7 @@ def create_artist_submission():
 def shows():
   # displays list of shows at /shows
   # TODO: replace with real venues data.
-  #       num_shows should be aggregated based on number of upcoming shows per venue.
+  # num_shows should be aggregated based on number of upcoming shows per venue.
   data=[{
     "venue_id": 1,
     "venue_name": "The Musical Hop",
@@ -570,9 +581,20 @@ def create_shows():
 def create_show_submission():
   # called to create new shows in the db, upon submitting new show listing form
   # TODO: insert form data as a new Show record in the db, instead
-
-  # on successful db insert, flash success
-  flash('Show was successfully listed!')
+  showForm = ShowForm(request.form)
+  try:
+    show = Show(Artist_id = showForm.artist_id.data,
+                Venue_id = showForm.venue_id.data,
+                Start_time = showForm.start_time.data)
+    db.session.add(show)
+    db.session.commit()
+    flash('Show was successfully listed!')
+  except Exception as e:
+    db.session.rollback()
+    print (e)
+    flash('An error occurred. Show could not be listed.')
+  finally:
+    db.session.close()
   # TODO: on unsuccessful db insert, flash an error instead.
   # e.g., flash('An error occurred. Show could not be listed.')
   # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
