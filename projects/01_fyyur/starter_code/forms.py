@@ -191,6 +191,8 @@ class ArtistForm(Form):
             ('WY', 'WY'),
         ]
     )
+    def validatePhone(self,phone):
+        return phone
     phone = StringField(
         # TODO implement validation logic for state
         'phone'
