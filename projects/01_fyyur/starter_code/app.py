@@ -212,17 +212,14 @@ def venues():
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
-  # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
-  # seach for Hop should return "The Musical Hop".
-  # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
-  response={
-    "count": 1,
-    "data": [{
-    "id": 2,
-    "name": "The Dueling Pianos Bar",
-    "num_upcoming_shows": 0,
-    }]
+  search = request.form.get('search_term')
+  VenueFilter = Venue.name.ilike(f"%{search}%")
+  venues = Venue.query.filter(VenueFilter).all()
+  response = {
+      "count":len(venues),
+      "data":[venue.getJson for venue in venues]
   }
+
   return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
 
 @app.route('/venues/<int:venue_id>')
@@ -347,8 +344,6 @@ def edit_venue(venue_id):
   venue=venue_update.getJson
   form = VenueForm(data=venue)
 
-  # TODO: populate form with values from venue with ID <venue_id>
-
   return render_template('forms/edit_venue.html', form=form, venue=venue)
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
@@ -430,8 +425,6 @@ def create_shows():
 
 @app.route('/shows/create', methods=['POST'])
 def create_show_submission():
-  # called to create new shows in the db, upon submitting new show listing form
-  # TODO: insert form data as a new Show record in the db, instead
   showForm = ShowForm(request.form)
   try:
     show = Show(Artist_id = showForm.artist_id.data,
