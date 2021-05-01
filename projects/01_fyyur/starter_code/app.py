@@ -15,8 +15,8 @@ from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
 from flask_migrate import Migrate
-
 from models import db, Venue, Artist, Show
+from datetime import datetime as dt
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -54,11 +54,12 @@ def index():
 
 @app.route('/venues')
 def venues():
-  city_states = Venue.query.distinct(Venue.city, Venue.state).all()
-  data=[]
-  for usc in city_states:
+    city_states = Venue.query.distinct(Venue.city, Venue.state).all()
+    data=[]
+    for usc in city_states:
       data.append(usc.getAggVenue)
-  return render_template('pages/venues.html', areas=data);
+
+    return render_template('pages/venues.html', areas=data);
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
@@ -75,7 +76,17 @@ def search_venues():
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
   venue = Venue.query.get(venue_id)
-  data = venue.getVenueShowJson
+
+  future_shows_query = db.session.query(Show).join(Artist).filter(Show.Venue_id==venue_id).filter(Show.Start_time>dt.now()).all()
+  future_shows = Venue.getArtistShows(future_shows_query)
+  past_shows_query = db.session.query(Show).join(Artist).filter(Show.Venue_id==venue_id).filter(Show.Start_time<dt.now()).all()
+  past_shows = Venue.getArtistShows(past_shows_query)
+  data = venue.getJson
+  data["past_shows"] = past_shows
+  data["upcoming_shows"] = future_shows
+  data["past_shows_count"] = len(past_shows)
+  data["upcoming_shows_count"] = len(future_shows)
+
   return render_template('pages/show_venue.html', venue=data)
 
 #  Create Venue
@@ -153,7 +164,18 @@ def search_artists():
 @app.route('/artists/<int:artist_id>')
 def show_artist(artist_id):
   data = Artist.query.get(artist_id)
-  showdata = data.getArtistShowJson
+  past_shows_query = db.session.query(Show).join(Venue).filter(Show.Artist_id == artist_id)\
+                       .filter(Show.Start_time<dt.now()).all()
+  past_shows = Artist.getVenueShows(past_shows_query)
+  future_shows_query = db.session.query(Show).join(Venue).filter(Show.Artist_id == artist_id)\
+                       .filter(Show.Start_time>dt.now()).all()
+  future_shows = Artist.getVenueShows(future_shows_query)
+  showdata = data.getJson
+  showdata["past_shows"] = past_shows
+  showdata["upcoming_shows"] = future_shows
+  showdata["past_shows_count"] = len(past_shows)
+  showdata["upcoming_shows_count"] = len(future_shows)
+
   return render_template('pages/show_artist.html', artist=showdata)
 
 #  Update
@@ -266,9 +288,18 @@ def create_artist_submission():
 
 @app.route('/shows')
 def shows():
-  show = Show.query.all()
-  data = [s.getJson for s in show]
-  #print (data)
+  newshow_query = db.session.query(Show).join(Artist).join(Venue)
+  data = [
+      {
+            "venue_id": query.venue.id,
+            "venue_name": query.venue.name,
+            "artist_id": query.artist.id,
+            "artist_name": query.artist.name,
+            "artist_image_link": query.artist.image_link,
+            "start_time": query.Start_time.strftime("%m/%d/%Y, %H:%M:%S")
+      }
+      for query in newshow_query
+  ]
   return render_template('pages/shows.html', shows=data)
 
 @app.route('/shows/create')

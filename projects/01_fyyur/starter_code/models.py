@@ -59,7 +59,21 @@ class Venue(db.Model):
         "upcoming_shows": [show.getJson for show in Show.query.filter(Show.Venue_id == self.id,Show.Start_time>dt.now())],
         "past_shows_count": len(Show.query.filter(Show.Venue_id == self.id,Show.Start_time<dt.now()).all()),
         "upcoming_shows_count": len(Show.query.filter(Show.Venue_id == self.id,Show.Start_time>=dt.now()).all())
+
       }
+
+
+    def getArtistShows(query):
+        return  [
+                    {
+                        "artist_id": s.artist.id,
+                        "artist_name": s.artist.name,
+                        "artist_image_link": s.artist.image_link,
+                        "start_time": s.Start_time.strftime('%Y-%m-%d %H:%M:%S')
+                    }
+                    for s in query
+            ]
+
 
     @property
     def getAggVenue(self):
@@ -67,8 +81,8 @@ class Venue(db.Model):
             'city': self.city,
             'state': self.state,
             'venues': [
-                        venue.getVenueShowJson for venue in Venue.query.filter(Venue.city==self.city,
-                                                     Venue.state == self.state).all()
+                        venue.getVenueShowJson for venue in Venue.query.filter(Venue.city == self.city,
+                                                                       Venue.state == self.state).all()
                       ]
         }
 
@@ -121,6 +135,16 @@ class Artist(db.Model):
           "upcoming_shows_count":len(Show.query.filter(Show.Artist_id == self.id,Show.Start_time >= dt.now()).all())
         }
 
+    def getVenueShows(query):
+        return  [
+                    {
+                        "venue_id": s.venue.id,
+                        "venue_name": s.venue.name,
+                        "venue_image_link": s.venue.image_link,
+                        "start_time": s.Start_time.strftime('%Y-%m-%d %H:%M:%S')
+                    }
+                    for s in query
+            ]
 
 
 class Show(db.Model):
