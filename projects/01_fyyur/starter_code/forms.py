@@ -1,7 +1,8 @@
 from datetime import datetime
 from flask_wtf import Form
 from wtforms import StringField, SelectField, SelectMultipleField, DateTimeField, BooleanField
-from wtforms.validators import DataRequired, AnyOf, URL
+from wtforms.validators import DataRequired, AnyOf, URL, ValidationError, Regexp
+import re
 
 class ShowForm(Form):
     artist_id = StringField(
@@ -89,7 +90,7 @@ class VenueForm(Form):
         'image_link'
     )
     genres = SelectMultipleField(
-        # TODO implement enum restriction
+
         'genres', validators=[DataRequired()],
         choices=[
             ('Alternative', 'Alternative'),
@@ -191,11 +192,10 @@ class ArtistForm(Form):
             ('WY', 'WY'),
         ]
     )
-    def validatePhone(self,phone):
-        return phone
+
     phone = StringField(
-        # TODO implement validation logic for state
-        'phone'
+        #reference: https://stackoverflow.com/questions/16699007/regular-expression-to-match-standard-10-digit-phone-number
+        'phone',validators=[DataRequired(),Regexp("^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$", message="Phone validation failed.Please enter the following format###-###-####")]
     )
     image_link = StringField(
         'image_link'
@@ -225,8 +225,8 @@ class ArtistForm(Form):
         ]
      )
     facebook_link = StringField(
-        # TODO implement enum restriction
-        'facebook_link', validators=[URL()]
+        #Reference https://stackoverflow.com/questions/5205652/facebook-profile-url-regular-expression
+        'facebook_link', validators=[URL(),Regexp('(?:(?:http|https):\/\/)?(?:www.)?facebook.com\/(?:(?:\w)*#!\/)?(?:pages\/)?(?:[?\w\-]*\/)?(?:profile.php\?id=(?=\d.*))?([\w\-]*)?', message=" the facebook link was not Properly formated")]
      )
 
     website_link = StringField(
