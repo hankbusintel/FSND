@@ -25,7 +25,6 @@ moment = Moment(app)
 app.config.from_object('config')
 db = SQLAlchemy(app)
 
-# TODO: connect to a local postgresql database
 migrate=Migrate(app,db)
 #----------------------------------------------------------------------------#
 # Models.
@@ -84,6 +83,16 @@ class Venue(db.Model):
         "upcoming_shows_count": len(Show.query.filter(Show.Venue_id == self.id,Show.Start_time>=dt.now()).all())
       }
 
+    @property
+    def getAggVenue(self):
+        return {
+            'city': self.city,
+            'state': self.state,
+            'venues': [
+                        venue.getVenueShowJson for venue in Venue.query.filter(Venue.city==self.city,
+                                                     Venue.state == self.state).all()
+                      ]
+        }
 
 
 class Artist(db.Model):
@@ -134,6 +143,8 @@ class Artist(db.Model):
           "upcoming_shows_count":len(Show.query.filter(Show.Artist_id == self.id,Show.Start_time >= dt.now()).all())
         }
 
+
+
 class Show(db.Model):
   __tablename__ = 'Show'
   id = db.Column(db.Integer, primary_key = True)
@@ -155,7 +166,6 @@ class Show(db.Model):
             "start_time": self.Start_time.strftime("%m/%d/%Y, %H:%M:%S")
             }
 
-# TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
 
 #----------------------------------------------------------------------------#
 # Filters.
@@ -185,29 +195,10 @@ def index():
 
 @app.route('/venues')
 def venues():
-  # TODO: replace with real venues data.
-  #       num_shows should be aggregated based on number of upcoming shows per venue.
-  data=[{
-    "city": "San Francisco",
-    "state": "CA",
-    "venues": [{
-    "id": 14,
-    "name": "The Musical Hop",
-    "num_upcoming_shows": 0,
-    }, {
-      "id": 15,
-      "name": "Park Square Live Music & Coffee",
-      "num_upcoming_shows": 1,
-    }]
-  }, {
-    "city": "New York",
-    "state": "NY",
-    "venues": [{
-    "id": 16,
-    "name": "The Dueling Pianos Bar",
-    "num_upcoming_shows": 0,
-    }]
-  }]
+  city_states = Venue.query.distinct(Venue.city, Venue.state).all()
+  data=[]
+  for usc in city_states:
+      data.append(usc.getAggVenue)
   return render_template('pages/venues.html', areas=data);
 
 @app.route('/venues/search', methods=['POST'])
@@ -248,7 +239,7 @@ def create_venue_submission():
                   image_link = venueform.image_link.data,
                   facebook_link = venueform.facebook_link.data,
                   genres = venueform.genres.data,
-                  seeking_talent = venueform.genres.data,
+                  seeking_talent = venueform.seeking_talent.data,
                   website = venueform.website_link.data
                   )
     db.session.add(venue)
@@ -264,36 +255,47 @@ def create_venue_submission():
     db.session.close()
   return render_template('pages/home.html')
 
-@app.route('/venues/<venue_id>', methods=['DELETE'])
+@app.route('/venues/delete/<venue_id>', methods=['GET','DELETE'])
 def delete_venue(venue_id):
   # TODO: Complete this endpoint for taking a venue_id, and using
   # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
-
   # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
   # clicking that button delete it from the db then redirect the user to the homepage
-  return None
+    try:
+
+        venue_delete = Venue.query.get(venue_id)
+        db.session.delete(venue_delete)
+        db.session.commit()
+        flash("Venue {0} has been deleted successfully".format(
+            venue_delete[0]['name']))
+    except:
+        db.session.rollback()
+        flash("Venue {0} can not be deleted".format(
+            venue_delete[0]['name']))
+    finally:
+        db.session.close()
+
+
+    return render_template('pages/home.html')
 
 #  Artists
 #  ----------------------------------------------------------------
 @app.route('/artists')
 def artists():
-  # TODO: replace with real data returned from querying the database
+
   data = Artist.query.all()
   return render_template('pages/artists.html', artists=data)
 
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
-  # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
-  # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
-  # search for "band" should return "The Wild Sax Band".
-  response={
-    "count": 1,
-    "data": [{
-      "id": 4,
-      "name": "Guns N Petals",
-      "num_upcoming_shows": 0,
-    }]
+  search = request.form.get("search_term")
+  artistFilter = Artist.name.ilike(f"%{search}%")
+  artists = Artist.query.filter(artistFilter).all()
+  response = {
+      "count":len(artists),
+      "data":[ artist.getArtistShowJson for artist in artists]
   }
+
   return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
 
 @app.route('/artists/<int:artist_id>')
