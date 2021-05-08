@@ -9,4 +9,4 @@ DEBUG = True
 # Connect to the database
 
 # TODO IMPLEMENT DATABASE URL
-SQLALCHEMY_DATABASE_URI = 'postgres://postgres:jy03120812@localhost:5432/artists'
+SQLALCHEMY_DATABASE_URI = ''
